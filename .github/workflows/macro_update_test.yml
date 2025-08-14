@@ -16,11 +16,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install pyyaml openai vercel
+        run: pip install pyyaml openai vercel jq bc
 
       - name: Run IMI Orchestrator Test
-        run: |
-          python imi_macro_updater/run_update.py | tee log.txt
+        run: python imi_macro_updater/run_update.py | tee log.txt
 
       - name: Upload HTML Artifact
         uses: actions/upload-artifact@v3
@@ -41,6 +40,7 @@ jobs:
 
       - name: Display Live URL in Logs
         run: echo "Live page: https://${{ secrets.VERCEL_PROJECT_ID }}.vercel.app"
+
       - name: Estimate Token Usage & Cost
         if: always()
         run: |
