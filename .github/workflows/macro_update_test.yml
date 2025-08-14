@@ -1,1 +1,42 @@
-name: placeholder
+name: IMI Macro Update TEST RUN
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test-run:
+    name: Test Run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pyyaml openai vercel
+
+      - name: Run IMI Orchestrator Test
+        run: python imi_macro_updater/run_update.py | tee log.txt
+
+      - name: Upload HTML Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: imi_macro_update_report
+          path: weekly/index.html
+
+      - name: Commit and Push Updated Page
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "TEST: IMI Daily Global Macro Update"
+          git push
+
+      - name: Trigger Vercel Deploy
+        run: curl -X POST "https://api.vercel.com/v1/integrations/deploy/${{ secrets.VERCEL_PROJECT_ID }}/${{ secrets.VERCEL_DEPLOY_HOOK }}"
+
+      - name: Display Live URL in Logs
+        run: echo "Live page: https://${{ secrets.VERCEL_PROJECT_ID }}.vercel.app"
