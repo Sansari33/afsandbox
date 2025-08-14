@@ -1,0 +1,10 @@
+imi_modules_path: "../IMI_projects"
+data_sources:
+  macro_calendar: imi_macro_calendar
+  equities_feed: imi_equities_feed
+  fx_feed: imi_fx_feed
+  news_archive: imi_news_archive
+output_path: "weekly/index.html"
+template_path: "imi_macro_updater/templates/imi_macro.html"
+vercel_deploy_hook: "O3JEOPuvKp"
+vercel_project_id: "prj_QKPlZvopcqpwXeHXQx4jA0JL6GeD"
