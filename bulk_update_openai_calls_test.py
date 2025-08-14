@@ -1,29 +1,57 @@
-import os
+name: IMI Macro Update TEST RUN
+on:
+  workflow_dispatch:
 
-# Root folder of your repo
-ROOT_DIR = os.getcwd()
+jobs:
+  test-run:
+    name: Test Run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-for subdir, _, files in os.walk(ROOT_DIR):
-    for file in files:
-        if file.endswith(".py"):
-            file_path = os.path.join(subdir, file)
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
+      - name: Install dependencies
+        run: pip install pyyaml openai vercel jq bc
 
-            changes = []
+      - name: Run IMI Orchestrator Test
+        run: python imi_macro_updater/run_update.py | tee log.txt
 
-            # Check for openai import
-            if "import openai" in content:
-                changes.append("Replace 'import openai' with tracked_chat_completion import")
+      - name: Upload HTML Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: imi_macro_update_report
+          path: weekly/index.html
 
-            # Check for ChatCompletion.create usage
-            if "openai.ChatCompletion.create" in content:
-                changes.append("Replace 'openai.ChatCompletion.create' with 'tracked_chat_completion'")
+      - name: Commit and Push Updated Page
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "TEST: IMI Daily Global Macro Update" || echo "No changes to commit"
+          git push
 
-            if changes:
-                print(f"--- {file_path} ---")
-                for change in changes:
-                    print(f"   • {change}")
+      - name: Trigger Vercel Deploy
+        run: curl -X POST "https://api.vercel.com/v1/integrations/deploy/${{ secrets.VERCEL_PROJECT_ID }}/${{ secrets.VERCEL_DEPLOY_HOOK }}"
 
-print("✅ Test mode complete — review above changes before running the live update script.")
+      - name: Display Live URL in Logs
+        run: echo "Live page: https://${{ secrets.VERCEL_PROJECT_ID }}.vercel.app"
+
+      - name: Estimate Token Usage & Cost
+        if: always()
+        run: |
+          echo "------ TOKEN USAGE ESTIMATE ------"
+          if [ -f token_usage.json ]; then
+            TOKENS=$(jq '.prompt_tokens + .completion_tokens' token_usage.json)
+            echo "Total tokens: $TOKENS"
+            COST_MINI=$(echo "$TOKENS * 0.0000006" | bc -l)
+            COST_GPT4=$(echo "$TOKENS * 0.00003" | bc -l)
+            echo "Estimated cost with GPT-4o-mini: $COST_MINI USD"
+            echo "Estimated cost with GPT-4: $COST_GPT4 USD"
+          else
+            echo "No token usage file found — skipping estimate."
+          fi
