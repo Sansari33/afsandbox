@@ -41,7 +41,6 @@ jobs:
 
       - name: Display Live URL in Logs
         run: echo "Live page: https://${{ secrets.VERCEL_PROJECT_ID }}.vercel.app"
-
       - name: Estimate Token Usage & Cost
         if: always()
         run: |
