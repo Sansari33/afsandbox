@@ -68,4 +68,29 @@ report_html = render_template(
         "date": date.today().strftime("%B %d, %Y"),
         "market_overview": ranked_ideas.get('market_overview', ''),
         "key_indicators": ranked_ideas.get('indicators', ''),
-        "equities": ranked_ideas.get('eq_
+        "equities": ranked_ideas.get('equities', ''),
+        "fx_rates": ranked_ideas.get('fx_rates', ''),
+        "news": ranked_ideas.get('news', ''),
+        "risk_matrix": ranked_ideas.get('risk_matrix', '')
+    }
+)
+
+Path(cfg['output_path']).write_text(report_html, encoding="utf-8")
+save_logs(signals, log_dir=f"logs/{date.today()}")
+
+# ------------------------
+# SAVE TOKEN USAGE DATA
+# ------------------------
+token_usage_data = {
+    "prompt_tokens": total_prompt_tokens,
+    "completion_tokens": total_completion_tokens
+}
+
+with open("token_usage.json", "w") as f:
+    json.dump(token_usage_data, f)
+
+print("\n------ TOKEN USAGE SUMMARY ------")
+print(f"Prompt tokens: {total_prompt_tokens}")
+print(f"Completion tokens: {total_completion_tokens}")
+print(f"Total tokens: {total_prompt_tokens + total_completion_tokens}")
+print("Token usage saved to token_usage.json")
