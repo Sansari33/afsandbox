@@ -19,7 +19,8 @@ jobs:
         run: pip install pyyaml openai vercel
 
       - name: Run IMI Orchestrator Test
-        run: python imi_macro_updater/run_update.py | tee log.txt
+        run: |
+          python imi_macro_updater/run_update.py | tee log.txt
 
       - name: Upload HTML Artifact
         uses: actions/upload-artifact@v3
@@ -40,3 +41,18 @@ jobs:
 
       - name: Display Live URL in Logs
         run: echo "Live page: https://${{ secrets.VERCEL_PROJECT_ID }}.vercel.app"
+
+      - name: Estimate Token Usage & Cost
+        if: always()
+        run: |
+          echo "------ TOKEN USAGE ESTIMATE ------"
+          if [ -f token_usage.json ]; then
+            TOKENS=$(jq '.prompt_tokens + .completion_tokens' token_usage.json)
+            echo "Total tokens: $TOKENS"
+            COST_MINI=$(echo "$TOKENS * 0.0000006" | bc -l)
+            COST_GPT4=$(echo "$TOKENS * 0.00003" | bc -l)
+            echo "Estimated cost with GPT-4o-mini: $COST_MINI USD"
+            echo "Estimated cost with GPT-4: $COST_GPT4 USD"
+          else
+            echo "No token usage file found — skipping estimate."
+          fi
